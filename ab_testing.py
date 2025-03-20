@@ -7,13 +7,13 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor
 from scipy import stats
 
-# 1. Завантаження та Попередня Обробка Даних
+# 1. Downloading and Pre-processing Data
 
-# Завантажте набір даних для контрольної та тестової груп
+# Download the dataset for the control and test groups
 control = pd.read_csv("Datasets/control_group.csv", sep=';')
 test = pd.read_csv("Datasets/test_group.csv", sep=';')
 
-# Огляд датасетів 
+# Dataset overview
 print(control.head(), '\n')
 print(control.info(), '\n')
 print(control.columns, '\n\n\n')
@@ -22,65 +22,65 @@ print(test.head(), '\n')
 print(test.info(), '\n')
 print(control.columns, '\n\n\n')
 
-# Перетворення значень у колонці 'Date' на формат datetime
+# Convert values in the 'Date' column to datetime format
 control['Date'] = pd.to_datetime(control['Date'], format='%d.%m.%Y')
 test['Date'] = pd.to_datetime(test['Date'], format='%d.%m.%Y')
 
-# Перевірка кількості пропущених значень до заповнення у control
+# Checking the number of missing values to be filled in control
 print(f"Control missing values before filling: {control.isnull().sum().sum()}")
 
-# Перевірка на пропущені значення та заповнення їх середніми значеннями
+# Check for missing values and fill them in with average values
 control = control.apply(lambda col: col.fillna(round(col.mean())) if np.issubdtype(col.dtype, np.number) else col)
 
-# Перевірка кількості пропущених значень після заповнення у control
+# Checking the number of missing values after filling in control
 print(f"Control missing values after filling: {control.isnull().sum().sum()}")
 
 
-# Перевірка кількості пропущених значень до заповнення у test
+# Checking the number of missing values to fill in the test
 print(f"Test missing values before filling: {test.isnull().sum().sum()}")
 
-# Перевірка на пропущені значення та заповнення їх середніми значеннями
+# Check for missing values and fill them in with average values
 test = test.apply(lambda col: col.fillna(round(col.mean())) if np.issubdtype(col.dtype, np.number) else col)
 
-# Перевірка кількості пропущених значень після заповнення у test
+# Checking the number of missing values after filling in the test
 print(f"Test missing values after filling: {test.isnull().sum().sum()}")
 
 print(control.head(), '\n')
 print(test.head(), '\n')
 
-# 2. Статистичний Аналіз
+# 2. Statistical Analysis
 
-# Розрахунок коефіцієнтів конверсії для обох кампаній
+# Calculation of conversion rates for both campaigns
 control['Conversion Rate (%)'] = (control['# of Purchase'] / control['# of Impressions']) * 100
 test['Conversion Rate (%)'] = (test['# of Purchase'] / test['# of Impressions']) * 100
 
-# Перевірка результату розрахунків
+# Checking the calculation result
 print(control[['Campaign Name', 'Date', 'Conversion Rate (%)']].head(), '\n')
 print(test[['Campaign Name', 'Date', 'Conversion Rate (%)']].head(), '\n')
 
-# Перевірка нормальності розподілу коефіцієнтів конверсії за допомогою тесту Шапіро-Вілка
+# Checking the normality of the distribution of conversion rates using the Shapiro-Wilk test
 stat, p_value_control = stats.shapiro(control['Conversion Rate (%)'])
 stat, p_value_test = stats.shapiro(test['Conversion Rate (%)'])
 print(f"p-value for control group normality: {p_value_control}")
 print(f"p-value for test group normality: {p_value_test}")
 
-# Логарифмічна трансформація для нормалізації розподілу
+# Logarithmic transformation to normalise the distribution
 control['Log Conversion Rate (%)'] = np.log(control['Conversion Rate (%)'] + 1)
 test['Log Conversion Rate (%)'] = np.log(test['Conversion Rate (%)'] + 1)
 
-# Перевірка нормальності після трансформації
+# Checking the normality after transformation
 stat_control_log, p_value_control_log = stats.shapiro(control['Log Conversion Rate (%)'])
 stat_test_log, p_value_test_log = stats.shapiro(test['Log Conversion Rate (%)'])
 print(f"p-value for control group after log transformation: {p_value_control_log}")
 print(f"p-value for test group after log transformation: {p_value_test_log}")
 
-# Проведення t-тесту на логарифмованих значеннях
+# Carrying out a t-test on logarithmic values
 t_stat, p_value = stats.ttest_ind(control['Log Conversion Rate (%)'], test['Log Conversion Rate (%)'], equal_var=False)
 print(f"t-statistics: {t_stat}, p-value: {p_value}")
 
-# 3. Візуалізація Результатів
+# 3. Visualisation of results
 
-# Побудова стовпчастої діаграми середніх значень коефіцієнтів конверсії
+# Building a bar chart of average conversion rates
 group_means = {
     'Group': ['Control', 'Test'],
     'Conversion Rate (%)': [
@@ -97,7 +97,7 @@ plt.ylabel('Conversion Rate (%)')
 plt.xlabel('Group')
 plt.show()
 
-# Побудова боксплотів для обох груп
+# Building boxspots for both groups
 fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 sns.boxplot(data=control['Log Conversion Rate (%)'], ax=axes[0], color='#6095a3')
 axes[0].set_title('Control Group')
@@ -111,7 +111,7 @@ fig.suptitle('Порівняння розподілу коефіцієнтів �
 plt.tight_layout()
 plt.show()
 
-# Побудова гістограм для обох груп
+# Create histograms for both groups
 plt.figure(figsize=(12, 5))
 plt.hist(control['Log Conversion Rate (%)'], bins=15, alpha=0.5, label='Control', color='#6095a3')
 plt.hist(test['Log Conversion Rate (%)'], bins=15, alpha=0.5, label='Test', color='#f4a261')
